@@ -16,6 +16,7 @@ header = '''
 ### Contents
 '''
 docstrings = []
+visualizations = ['### Visualizations']
 for file in os.listdir('./'):
     if re.search('\.py$', file):
         with open(file, 'rb') as f:
@@ -29,6 +30,13 @@ for file in os.listdir('./'):
                 if line.strip() == "\"\"\"" and writing == False:
                     writing = True
             docstrings.append(block)
+    if re.search('\.html$', file):
+        with open(file, 'rb') as f:
+            for line in f:
+                if "<!--" in line.strip():
+                    visualizations.append(line.replace('<!--','').replace('-->',''))
+            
+
 
 def translate_docstring_to_markdown(docstring):
     docstring = re.sub('~+', '<pre><code>',docstring)
@@ -38,7 +46,7 @@ def translate_docstring_to_markdown(docstring):
 
 docstrings = [translate_docstring_to_markdown(d) for d in docstrings]
 
-sections = [header] + docstrings
+sections = [header] + docstrings + visualizations
 sections = [section.strip() for section in sections]
 sections = '\n\n'.join(sections)
 

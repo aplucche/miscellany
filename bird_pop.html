@@ -1,0 +1,204 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <!--[Correlation Between Pollutants and UK Bird Population](http://vis-examples.s3-website-us-east-1.amazonaws.com/)-->
+  <meta charset="utf-8">
+  <title>Correlation Between Pollutants and UK Bird Population</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link href='https://fonts.googleapis.com/css?family=Lato:400,700,900' rel='stylesheet' type='text/css'>
+  <style>
+  html, body { 
+    width: 100%;
+    height: 100%;
+
+    font:bold 12px Lato, sans-serif;
+  }
+  
+  select {
+    font:14px Lato, sans-serif;
+    overflow-y: auto;
+  }
+
+  #container {
+    display: flex;
+    flex-flow: column wrap;
+    align-items: center;
+    justify-content: center;
+  }
+
+  @media (max-width: 600px) {
+    #container {
+      display: flex;
+      flex-flow: column nowrap;
+      align-items: flex-start;
+      justify-content: flex-start;
+    }
+  }
+
+  #header {
+    font: bolder 20px Lato, sans-serif;
+    color: #353839;
+    max-width: 600px;
+    text-align: left;
+  }
+  path { 
+      stroke: #64908A;
+      stroke-width: 4;
+      fill: none;
+  }
+  .pollutantLine {
+    stroke: #BF4D28;
+    stroke-width: 3;
+  }
+
+  .axis path, .axis line {
+      fill: none;
+      stroke: lightgray;
+      stroke-width: 1;
+      shape-rendering: crispEdges;
+  }
+  </style>
+  <script src="https://d3js.org/d3.v3.min.js" charset="utf-8"></script>
+</head>
+<body>
+  <div id='container'>
+    <div id='header'>Correlation Between Pollutants and UK Bird Population</div>
+    <div id="root"></div>
+    <select id="dropdown" size='5' onchange="update(this)">
+      <option value="Ammonia Index" selected>Ammonia</option>
+      <option value="Nitrogen Oxides Index">Nitrogen Oxides</option>
+      <option value="Sulphur Dioxide Index">Sulphur Dioxide</option>
+      <option value="Non-Methane Volatile Organic Compounds Index">Non-Methane Volatile Organic Compounds</option>
+      <option value="pm10 Index">pm10</option>
+    </select>
+  </div>
+
+  <script>
+
+    var margin = {top: 30, right: 20, bottom: 30, left: 50},
+      width = 600 - margin.left - margin.right,
+      height = 270 - margin.top - margin.bottom;
+
+    var parseDate = d3.time.format('%Y').parse;
+
+    var x = d3.time.scale().range([0, width]);
+    var y = d3.scale.linear().range([height, 0]);
+
+    var xAxis = d3.svg.axis().scale(x)
+        .orient("bottom").ticks(5);
+
+    var yAxis = d3.svg.axis().scale(y)
+        .orient("left").ticks(5);
+
+    // Define lines
+    var birdPopulationLine = d3.svg.line()
+        .x(function(d) { return x(d.date); })
+        .y(function(d) { return y(d.all_species); });
+
+    var pollutantLine = d3.svg.line()
+        .defined(function(d) { return d.selectedPollutant != ''; })
+        .x(function(d) { return x(d.date); })
+        .y(function(d) { return y(d.selectedPollutant); });
+
+    var svg = d3.select('#root')
+        .append("svg")
+            .attr("width", width + margin.left + margin.right)
+            .attr("height", height + margin.top + margin.bottom)
+        .append("g")
+            .attr("transform", 
+                  "translate(" + margin.left + "," + margin.top + ")");
+
+      d3.csv('transformed_data/visualization_data.csv', function(error, data) {
+          data.forEach(function(d) {
+              d.date = parseDate(d.year);
+              d.all_species = +d.all_species;
+              d.selectedPollutant = +d['Ammonia Index'];
+          });
+
+          x.domain(d3.extent(data, function(d) { return d.date; }));
+          y.domain([0, d3.max(data, function(d) { return Math.max(d.all_species,d.selectedPollutant); })]);
+
+          svg.append("path")
+              .attr("class", "birdPopulationLine")
+              .attr("d", birdPopulationLine(data));
+
+          svg.append("path")
+              .attr("class", "pollutantLine")
+              .attr("d", pollutantLine(data));
+
+          svg.append("g")
+              .attr("class", "x axis")
+              .attr("transform", "translate(0," + height + ")")
+              .call(xAxis);
+
+          svg.append("g")
+              .attr("class", "y axis")
+              .call(yAxis);
+
+          // Add legend
+          svg.append('text')
+            .attr("class", "legendBirdPopulation")
+            .attr('x', width)
+            .attr('y', height-37)
+            .text('Bird Population Index')
+            .style({
+              'fill': '#64908A',
+              'font-size': '11px', 
+              'text-anchor': 'end'
+            })
+          svg.append('text')
+            .attr("class", "legendPollutant")
+            .attr('x', width)
+            .attr('y', height-26)
+            .text('Ammonia Index')
+            .style({
+              'fill': '#BF4D28',
+              'font-size': '11px', 
+              'text-anchor': 'end'
+            })
+      });
+
+    function update(selection) {
+      d3.csv('transformed_data/visualization_data.csv', function(error, data) {
+          data.forEach(function(d) {
+          d.date = parseDate(d.year);
+          d.all_species = +d.all_species;
+          d.selectedPollutant = +d[selection.value];
+        });
+
+        x.domain(d3.extent(data, function(d) { return d.date; }));
+        y.domain([0, d3.max(data, function(d) { return Math.max(d.all_species,d.selectedPollutant); })]);
+
+      var svg = d3.select('#root').transition();
+
+          svg.select(".pollutantLine") //faded transition
+              .duration(200)
+              .style("stroke-opacity", 0.0)              
+              .transition().duration(350)
+              .attr("d", pollutantLine(data))
+              .transition().duration(200)
+              .style("stroke-opacity", 1.0)
+
+          svg.select(".birdPopulationLine")
+              .duration(750)
+              .attr("d", birdPopulationLine(data));
+          svg.select(".x.axis")
+              .duration(750)
+              .call(xAxis);
+          svg.select(".y.axis")
+              .duration(750)
+              .call(yAxis);
+
+          svg.select(".legendPollutant")
+              .duration(200)
+              .style("fill-opacity", 0.0)              
+              .transition().duration(350)
+              .text(selection.value)
+              .transition().duration(200)
+              .style("fill-opacity", 1.0);
+
+      });
+    }
+  </script>
+</body>
+</html>
