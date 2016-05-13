@@ -11,10 +11,9 @@ import os
 import re
 
 header = '''
-# Collection of Scripts
-Python and D3 Scripts for data collection, manipulation and visualization
+# Miscellaneous Python and D3 scripts for data collection, manipulation and visualization
 
-### Scripts
+### Contents
 '''
 docstrings = []
 for file in os.listdir('./'):
