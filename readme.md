@@ -18,6 +18,56 @@ generate_readme.py
 
 </code></pre>
 
+
+
+gmail_scraper.py
+    <pre><code>
+        Writes email contents to seperate files. Can extract unseen emails or
+        all.  Settings allow files to be marked as read or remain unmodified and
+        for only specified elements to be extracted (e.g. tables)
+
+        Note: Gmail no longer supports using username and password without
+        changing security settings - use OAuth instead.
+
+    Usage::
+        Set up Oauth credentials if using gmail. Create config file based on
+        example below then run
+    Example Config::
+        -gmail_scraper.ini
+
+        [email_info]
+        LOGIN_METHOD: <oauth | password>
+        ;use for oauth login
+        CLIENT_KEY: <oauth client key>
+        CLIENT_SECRET: <oauth client secret>
+        REFRESH_TOKEN: <oauth refresh token>
+        ;use for password login
+        EMAIL_USERNAME: <username>
+        EMAIL_PASSWORD: <password>
+
+        [scraper_settings]
+        SEARCH_TYPE: <ALL | (UNSEEN)>
+        MARK_AS_READ: <True | False>
+        ;EXTRACT_ELEMENT Downloads full text if false
+        EXTRACT_ELEMENT: <True | False>
+        LOGGING: <True | False>
+        DOWNLOAD_DIRECTORY: <dir>
+    Setting up OAuth credentials for Gmail::
+        Client key and secret can be created using google console here:
+            https://console.developers.google.com/apis/credentials
+        Download Google's OAuth helper file here:
+            https://raw.githubusercontent.com/google/
+                                    gmail-oauth2-tools/master/python/oauth2.py
+        Follow example at https://github.com/google/gmail-oauth2-tools/
+                                                    wiki/OAuth2DotPyRunThrough
+          to generate refresh token
+            1. run:
+                python oauth2.py --generate_oauth2_token 
+                        --client_id=<client_id> --client_secret=<client_secret>
+            2. follow prompts then copy refresh token to ini file
+
+</code></pre>
+
 meetup.py
     <pre><code>
     Collects streaming meetup.com RSVP data.  Writes frequency count of topics 
